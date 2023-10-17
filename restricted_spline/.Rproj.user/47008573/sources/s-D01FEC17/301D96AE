@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1696510368884.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "301D96AE",
+    "lastKnownWriteTime" : 1693373896,
+    "last_content_update" : 1693373896,
+    "path" : "C:/Users/DELL/Desktop/code_version/restricted_spline9.22/basic_functions/contiunous.R",
+    "project_path" : "basic_functions/contiunous.R",
+    "properties" : {
+        "cursorPosition" : "30,23",
+        "scrollLine" : "6"
+    },
+    "relative_order" : 11,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

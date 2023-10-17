@@ -1,0 +1,331 @@
+# runtime1 <- system.time({
+#   res1=ss_dis(n0,data1,k,u,v,2)
+# })
+# 
+# # Print the runtime
+# print(paste("DID time:", runtime1[3], "seconds"))
+# 
+# runtime2 <- system.time({
+#   res2=ss_dis(n0,data1,k,u,v,1)
+# })
+# print(paste("IDI time:", runtime2[3], "seconds"))
+# 
+
+  
+  n=n0
+  xdat=data1
+  # n=seq(10,500,by=10)
+  # data1=seq(0,49000,by=1000)
+  k=4
+  u=u
+  v=v
+  q=2
+
+  dn=gen(n)
+  ndat=length(xdat)
+  knots=round((0:(k+1))*ndat/(k+1))
+  knots[1]=1
+  knots[k+2]=ndat
+  t=xdat[knots]
+  m=k+2
+  dn=gen(n)
+  M=matrix(1:(length(xdat)*(k+3)),ncol = length(xdat),nrow = k+3)
+  for (j in 1:(k+3)){
+    for(i in 1:length(xdat)){
+      M[j,i]=base_int(xdat[i],j,xdat,k,length(xdat),knots,t)
+    }
+  }
+  M0=matrix(1:(length(xdat)*(k+3)),ncol = length(xdat),nrow = k+3)
+  for (j in 1:(k+3)){
+    for(i in 1:length(xdat)){
+      M0[j,i]=base_fun(xdat[i],j,xdat,k,length(xdat),knots,t)
+    }
+  }
+  A=diag(m-1)
+  A=rbind(A,1:(m-1)*0)
+  
+  runtime3 <- system.time({
+  if(q==2){  
+    sigma0=matrix(1:((m-1)*length(xdat)),nrow=m-1,ncol=length(xdat))
+    sigma1=matrix(1:((m-1)*length(xdat)),nrow=m-1,ncol=length(xdat))
+    
+    j=min(which((u<=t)==1))
+    if(j>=3){  ###before u
+      for(l in 1:(j-2)){
+        sigma0[l,]=M0[l,]
+        sigma1[l,]=M[l,]
+        A[m,l]=base_fun(u,l,xdat,k,length(xdat),knots,t)
+      }
+    }
+    
+    
+    ###u r
+    fj0=function(x){return(base_fun(x,j-1,xdat,k,length(xdat),knots,t))}
+    fj=function(x){return(base_fun(x,j,xdat,k,length(xdat),knots,t))}
+    f1=function(x){grad(fj,x)}
+    f0=function(x){grad(fj0,x)}
+    r=f0(u)/f1(u)
+    
+    ###inter u and v
+    j1=min(which((v<=t)==1))
+    if(j<=(j1-3)){
+      for(l in j:(j1-3)){
+        sigma0[l,]=1-M0[l+1,]
+        sigma1[l,]=xdat-M[l+1,]
+        A[m,l]=1-base_fun(u,l+1,xdat,k,length(xdat),knots,t)
+      }
+    }
+    ###v r
+    fj0=function(x){return(base_fun(x,j1-1,xdat,k,length(xdat),knots,t))}
+    fj=function(x){return(base_fun(x,j1,xdat,k,length(xdat),knots,t))}
+    f1=function(x){grad(fj,x)}
+    f0=function(x){grad(fj0,x)}
+    r1=f0(v)/f1(v)
+    
+    ###u&v
+    if(j<=(j1-2)){
+      sigma0[j-1,]=M0[j-1,]+r*(1-M0[j,])
+      ma=max(sigma0[j-1,])
+      sigma0[j-1,]=sigma0[j-1,]/ma
+      
+      sigma1[j-1,]=M[j-1,]+r*(xdat-M[j,])
+      sigma1[j-1,]=sigma1[j-1,]/ma
+      
+      sigma0[j1-2,]=1-M0[j1-1,]+r1*(M0[j1,])
+      ma1=max(sigma0[j1-2,])
+      sigma0[j1-2,]=sigma0[j1-2,]/ma1
+      
+      sigma1[j1-2,]=xdat-M[j1-1,]+r1*M[j1,]
+      sigma1[j1-2,]=sigma1[j1-2,]/ma1
+      
+      A[m,j-1]=(base_fun(u,j-1,xdat,k,length(xdat),knots,t)
+                +r*(1-base_fun(u,j,xdat,k,length(xdat),knots,t)))/ma
+      A[m,j1-2]=(1-base_fun(u,j1-1,xdat,k,length(xdat),knots,t)
+                 +r1*(base_fun(u,j1,xdat,k,length(xdat),knots,t)))/ma1
+    }
+    
+    if(j==(j1-1)){
+      sigma0[j-1,]=M0[j-1,]+r*(1-M0[j,])+r*r1*(M0[j+1,])
+      sigma1[j-1,]=M[j-1,]+(r*xdat-M[j,])+r*r1*(M[j+1,])
+      
+      ma=max(sigma0[j-1,])
+      sigma0[j-1,]=sigma0[j-1,]/ma
+      sigma1[j-1,]=sigma1[j-1,]/ma
+      A[m,j-1]= (base_fun(u,j-1,xdat,k,length(xdat),knots,t)
+                 +r*(1-base_fun(u,j,xdat,k,length(xdat),knots,t))+r*r1*(base_fun(u,j+1,xdat,k,length(xdat),knots,t)))/ma
+    }
+    
+    if(j1<=(k+1)){###after v                                                                                                                                                                                                
+      for(l in (j1-1):(k)){
+        sigma0[l,]=M0[l+2,]
+        sigma1[l,]=M[l+2,]
+        A[m,l]=base_fun(u,l+2,xdat,k,length(xdat),knots,t)
+      }
+    }
+    sigma0[k+1,]=M0[k+3,]
+    sigma1[k+1,]=xdat
+    A[m,k+1]=1
+    for(i in 1:(m-1)){
+      A[m-1,i] = sigma0[i,length(xdat)]
+      if(sigma0[i,length(xdat)]<=0.00001){
+        A[m-1,i]=0
+      }
+    }  
+  }
+  # print(A)
+  #####discon
+  
+  sigma=t(apply(sigma1, 1, diff))
+  objfun <- function(x) {
+    -(sum(dn*(log(t(x)%*%sigma)))-c(t(x)%*%sigma1[,ncol(sigma1)]))
+    # -lambda*(t(x)-t(beta0))%*%M2%*%t(M2)%*%(x-beta0))
+  }
+  grad_fun <- function(x) {
+    -(sigma %*% t(dn*(1/(t(x) %*% sigma))) - sigma1[,ncol(sigma1)])
+    # -2*lambda*M2%*%t(M2)%*%(x-beta0))
+  }
+  grad_fun <- function(x) {
+    grad <- grad(f = objfun, x = x)
+    return(grad)
+  }
+  })
+print(paste("DID_pre:", runtime3[3], "seconds"))
+  x0=rep(0.1,m-1)
+  ci <- rep(1e-300, m)
+  runtime5 <- system.time({
+  # 运行优化z
+  result <- constrOptim(max(n)/(result$par%*%sigma1)[length(xdat)]*result$par, objfun, ui=A, ci=ci, grad=grad_fun)
+  })
+  print(paste("DID_optim:", runtime5[3], "seconds"))
+  
+  beta=result$par
+  ans=new.env()
+  ans$beta=beta
+  ans$r=r
+  ans$M0=sigma0
+  ans$M=sigma1
+  ans$sigma=sigma
+
+
+
+
+
+
+n=n0
+xdat=data1
+k=4
+u=u
+v=v
+q=1
+
+dn=gen(n)
+ndat=length(xdat)
+knots=round((0:(k+1))*ndat/(k+1))
+knots[1]=1
+knots[k+2]=ndat
+t=xdat[knots]
+m=k+2
+dn=gen(n)
+M=matrix(1:(length(xdat)*(k+3)),ncol = length(xdat),nrow = k+3)
+for (j in 1:(k+3)){
+  for(i in 1:length(xdat)){
+    M[j,i]=base_int(xdat[i],j,xdat,k,length(xdat),knots,t)
+  }
+}
+M0=matrix(1:(length(xdat)*(k+3)),ncol = length(xdat),nrow = k+3)
+for (j in 1:(k+3)){
+  for(i in 1:length(xdat)){
+    M0[j,i]=base_fun(xdat[i],j,xdat,k,length(xdat),knots,t)
+  }
+}
+A=diag(m-1)
+A=rbind(A,1:(m-1)*0)
+
+runtime4 <- system.time({
+  
+if(q==1){  
+  sigma0=matrix(1:((m-1)*length(xdat)),nrow=m-1,ncol=length(xdat))
+  sigma1=matrix(1:((m-1)*length(xdat)),nrow=m-1,ncol=length(xdat))
+  
+  j=min(which((u<=t)==1))
+  if(j>=3){  ###before u
+    for(l in 1:(j-2)){
+      sigma0[l,]=1-M0[l,]
+      sigma1[l,]=xdat-M[l,]
+      A[m,l]=1-base_fun(v,l,xdat,k,length(xdat),knots,t)
+    }
+  }
+  
+  
+  ###u r
+  fj0=function(x){return(base_fun(x,j-1,xdat,k,length(xdat),knots,t))}
+  fj=function(x){return(base_fun(x,j,xdat,k,length(xdat),knots,t))}
+  f1=function(x){grad(fj,x)}
+  f0=function(x){grad(fj0,x)}
+  r=f0(u)/f1(u)
+  
+  ###inter u and v
+  j1=min(which((v<=t)==1))
+  if(j<=(j1-3)){
+    for(l in j:(j1-3)){
+      sigma0[l,]=M0[l+1,]
+      sigma1[l,]=M[l+1,]
+      A[m,l]=base_fun(v,l+1,xdat,k,length(xdat),knots,t)
+      
+    }
+  }
+  ###v r
+  fj0=function(x){return(base_fun(x,j1-1,xdat,k,length(xdat),knots,t))}
+  fj=function(x){return(base_fun(x,j1,xdat,k,length(xdat),knots,t))}
+  f1=function(x){grad(fj,x)}
+  f0=function(x){grad(fj0,x)}
+  r1=f0(v)/f1(v)
+  
+  ###u&v
+  if(j<=(j1-2)){
+    sigma0[j-1,]=1-M0[j-1,]+r*M0[j,]
+    ma=max(sigma0[j-1,])
+    sigma0[j-1,]=sigma0[j-1,]/ma
+    
+    sigma1[j-1,]=xdat-M[j-1,]+r*M[j,]
+    sigma1[j-1,]=sigma1[j-1,]/ma
+    
+    sigma0[j1-2,]=M0[j1-1,]+r1*(1-M0[j1,])
+    ma1=max(sigma0[j1-2,])
+    sigma0[j1-2,]=sigma0[j1-2,]/ma1
+    
+    sigma1[j1-2,]=M[j1-1,]+r1*(xdat-M[j1,])
+    sigma1[j1-2,]=sigma1[j1-2,]/ma1
+    
+    A[m,j-1]=(1-base_fun(v,j-1,xdat,k,length(xdat),knots,t)
+              +r*base_fun(v,j,xdat,k,length(xdat),knots,t))/ma
+    A[m,j1-2]=(base_fun(v,j1-1,xdat,k,length(xdat),knots,t)
+               +r1*(1-base_fun(v,j1,xdat,k,length(xdat),knots,t)))/ma1
+  }
+  # plot(apply(as.matrix(1:9000), 1, function(v){(1-base_fun(v,j-1,xdat,k,length(xdat),knots,t)
+  #           +r*base_fun(v,j,xdat,k,length(xdat),knots,t))/ma}))
+  
+  if(j==(j1-1)){
+    sigma0[j-1,]=1-M0[j-1,]+r*M0[j,]+r*r1*(1-M0[j+1,])
+    sigma1[j-1,]=xdat-M[j-1,]+r*M[j,]+r*r1*(xdat-M[j+1,])
+    
+    ma=max(sigma0[j-1,])
+    sigma0[j-1,]=sigma0[j-1,]/ma
+    sigma1[j-1,]=sigma1[j-1,]/ma
+    A[m,j-1]= (1-base_fun(v,j-1,xdat,k,length(xdat),knots,t)
+               +r*base_fun(v,j,xdat,k,length(xdat),knots,t)+r*r1*(1-base_fun(v,j+1,xdat,k,length(xdat),knots,t)))/ma
+  }
+  
+  if((j1-1)<=(k)){###after v                                                                                                                                                                                                
+    for(l in (j1-1):(k)){
+      sigma0[l,]=1-M0[l+2,]
+      sigma1[l,]=xdat-M[l+2,]
+      A[m,l]=1-base_fun(v,l+2,xdat,k,length(xdat),knots,t)
+    }
+  }    
+  sigma0[k+1,]=M0[k+3,]
+  sigma1[k+1,]=xdat
+  A[m,k+1]=1
+  # print(sigma0)
+  for(i in 1:(m-1)){
+    A[m-1,i] = sigma0[i,1]
+    # }
+  }
+}
+})
+print(paste("IDI_pre time:", runtime4[3], "seconds"))
+ 
+  # print(A)
+  #####discon
+  
+  sigma=t(apply(sigma1, 1, diff))
+  objfun <- function(x) {
+    -(sum(dn*(log(t(x)%*%sigma)))-c(t(x)%*%sigma1[,ncol(sigma1)]))
+  }
+  grad_fun <- function(x) {
+    -(sigma %*% t(dn*(1/(t(x) %*% sigma))) - sigma1[,ncol(sigma1)])
+  }
+  grad_fun <- function(x) {
+    grad <- grad(f = objfun, x = x)
+    return(grad)
+  }
+  runtime6 <- system.time({
+
+x0=rep(0.1,m-1)
+ci <- rep(1e-300, m)
+
+# 运行优化z
+result <- constrOptim(max(n)/(result$par%*%sigma1)[length(xdat)]*result$par, objfun, ui=A, ci=ci, grad=grad_fun)
+})
+  print(paste("IDI_optim:", runtime6[3], "seconds"))
+  
+beta=result$par
+ans=new.env()
+ans$beta=beta
+ans$r=r
+ans$M0=sigma0
+ans$M=sigma1
+ans$sigma=sigma
+
+
+

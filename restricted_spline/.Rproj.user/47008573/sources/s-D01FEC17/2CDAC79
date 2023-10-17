@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1695609993963.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "2CDAC79",
+    "lastKnownWriteTime" : 1695806247,
+    "last_content_update" : 1695806247256,
+    "path" : "C:/Users/DELL/Desktop/code_version/restricted_spline9.22/analysis_result/plot_code/chan_knots_analysis.R",
+    "project_path" : "analysis_result/plot_code/chan_knots_analysis.R",
+    "properties" : {
+        "cursorPosition" : "127,5",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

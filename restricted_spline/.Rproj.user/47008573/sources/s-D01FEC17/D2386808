@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1695528583126.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "D2386808",
+    "lastKnownWriteTime" : 1695643376,
+    "last_content_update" : 1695643376552,
+    "path" : "C:/Users/DELL/Desktop/code_version/restricted_spline9.22/analysis_result/DCAS/DCAS.R",
+    "project_path" : "analysis_result/DCAS/DCAS.R",
+    "properties" : {
+        "cursorPosition" : "523,85",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

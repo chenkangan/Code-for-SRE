@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1695807054814.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "239|32|254|0|\n255|45|305|0|\n306|45|361|0|\n362|27|447|0|\n448|32|695|0|\n696|30|1061|0|\n",
+    "hash" : "0",
+    "id" : "CC322A4F",
+    "lastKnownWriteTime" : 1695823033,
+    "last_content_update" : 1695823040973,
+    "path" : "C:/Users/DELL/Desktop/code_version/restricted_spline9.22/basic_functions/function.R",
+    "project_path" : "basic_functions/function.R",
+    "properties" : {
+        "cursorPosition" : "255,6",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
